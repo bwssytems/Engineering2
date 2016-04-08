@@ -39,7 +39,7 @@ Pebble.addEventListener('ready',function(e) {
 );
 
 Pebble.addEventListener('showConfiguration', function() {
-  var url = 'https://rawgit.com/bwssytems/Engineering2/config/index.html';
+  var url = 'https://rawgit.com/bwssytems/Engineering2/master/config/index.html';
   console.log('Showing configuration page: ' + url);
 
   Pebble.openURL(url);
@@ -72,6 +72,7 @@ Pebble.addEventListener('webviewclosed', function(e) {
 	colorDict.COLOR_HOUR_HAND = parseInt(configData.hour_hand_color.substring(0), 16);
 	colorDict.COLOR_MINUTE_HAND = parseInt(configData.minute_hand_color.substring(0), 16);
 	colorDict.COLOR_SECOND_HAND = parseInt(configData.second_hand_color.substring(0), 16);
+	console.log('Configurationparsed: ' + JSON.stringify(configData));
 
 	Pebble.sendAppMessage(toggleDict, function() {
 		console.log('Send toggles successful: ' + JSON.stringify(toggleDict));
