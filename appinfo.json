@@ -1,0 +1,20 @@
+{
+    "appKeys": {},
+    "capabilities": [
+        ""
+    ],
+    "companyName": "crush157@yahoo.com",
+    "enableMultiJS": false,
+    "longName": "Engineering2",
+    "projectType": "native",
+    "resources": {
+        "media": []
+    },
+    "sdkVersion": "3",
+    "shortName": "Engineering2",
+    "uuid": "518c0579-9aec-42ec-9894-3e7b0c31f6e8",
+    "versionLabel": "1.0",
+    "watchapp": {
+        "watchface": false
+    }
+}
