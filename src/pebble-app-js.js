@@ -72,7 +72,7 @@ Pebble.addEventListener('webviewclosed', function(e) {
 	colorDict.COLOR_HOUR_HAND = parseInt(configData.hour_hand_color.substring(0), 16);
 	colorDict.COLOR_MINUTE_HAND = parseInt(configData.minute_hand_color.substring(0), 16);
 	colorDict.COLOR_SECOND_HAND = parseInt(configData.second_hand_color.substring(0), 16);
-	console.log('Configurationparsed: ' + JSON.stringify(configData));
+	console.log('Configurationparsed: ' + JSON.stringify(toggleDict));
 
 	Pebble.sendAppMessage(toggleDict, function() {
 		console.log('Send toggles successful: ' + JSON.stringify(toggleDict));
