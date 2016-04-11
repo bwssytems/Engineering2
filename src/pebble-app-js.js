@@ -1,9 +1,14 @@
-var openWeatherMapApiKey = '';
 var units = 'imperial';
+var weatherLocation = "chicago,il"
 
 if (localStorage.units) {
 	units = localStorage.units;
 }
+
+if (localStorage.weatherLocation) {
+	weatherLocation = localStorage.weatherLocation;
+}
+
 
 var locationOptions = {
   enableHighAccuracy: false,
@@ -34,7 +39,7 @@ Pebble.addEventListener('ready',function(e) {
 
 		setInterval(function() {
 			navigator.geolocation.getCurrentPosition(locationSuccess, locationError, locationOptions);
-		}, 60 * 60000); // 60 minutes
+		}, 5 * 60000); // 5 minutes
 	}
 );
 
@@ -49,6 +54,13 @@ Pebble.addEventListener('webviewclosed', function(e) {
 	var configData = JSON.parse(decodeURIComponent(e.response));
 	console.log('Configuration page returned: ' + JSON.stringify(configData));
 
+	if (configData.weather_location && configData.weather_location !== weatherLocation) {
+		// update weatherLocation
+		weatherLocation = configData.weather_location;
+		localStorage.weatherLocation = configData.weather_location;
+		navigator.geolocation.getCurrentPosition(locationSuccess, locationError, locationOptions);
+	}
+
 	if (configData.units && configData.units !== units) {
 		// update units
 		units = configData.units;
@@ -62,6 +74,7 @@ Pebble.addEventListener('webviewclosed', function(e) {
 	toggleDict.SHOW_SECOND_HAND = configData.show_second_hand;
 	toggleDict.SHOW_DATE = configData.show_date;
 	toggleDict.SHOW_TEMPERATURE = configData.show_temperature;
+  toggleDict.WEATHER_LOCATION = configData.weather_location;
 
 	var colorDict = {};
 
@@ -86,25 +99,20 @@ Pebble.addEventListener('webviewclosed', function(e) {
 	}, function() {
 		console.log('Send failed!');
 	});
-
-
-
-
 });
 
 function getTemp(lat, lon, callback) {
 	var req = new XMLHttpRequest();
-	var url = 'http://api.openweathermap.org/data/2.5/weather?lat=' + lat + '&lon=' + lon + '&units=' + units + '&APPID=';
+	var url = 'https://query.yahooapis.com/v1/public/yql?q=select%20item.condition%20from%20weather.forecast%20where%20woeid%20in%20(select%20woeid%20from%20geo.places(1)%20where%20text%3D%22'+weatherLocation+'%22)&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys';
 	console.log(url);
-	url += openWeatherMapApiKey;
 	req.open('GET', url, true);
 	req.onload = function(e) {
 		if (req.readyState == 4 && req.status == 200) {
-			if(req.status == 200) {
+	      console.log(req.responseText);
 				var res = JSON.parse(req.responseText);
-				var temp = res.main.temp;
+				var temp = res.query.results.channel.item.condition.temp;
 
-				if (units == 'si') {
+				if (units == 'metric') {
 
 				}
 
@@ -113,7 +121,6 @@ function getTemp(lat, lon, callback) {
 			else {
 				callback('Error');
 			}
-		}
 	};
 
 	req.send(null);

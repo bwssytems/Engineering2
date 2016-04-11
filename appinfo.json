@@ -11,7 +11,8 @@
         "SHOW_NUMBERS": 1,
         "SHOW_SECOND_HAND": 2,
         "SHOW_TEMPERATURE": 4,
-        "TEMPERATURE": 0
+        "TEMPERATURE": 0,
+        "WEATHER_LOCATION": 12
     },
     "capabilities": [
         "location",
