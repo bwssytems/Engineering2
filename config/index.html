@@ -72,6 +72,10 @@
           Temperature
           <input id='show_temperature_checkbox' type='checkbox' class='item-toggle' checked="true">
         </label>
+        <label class='item'>
+          Temperature Location
+          <input id='weather_location' type='text' class='item-text' value='ny,ny'>
+        </label>
       </div>
     </div>
 
@@ -111,6 +115,7 @@
     var secondHandCheckbox = document.getElementById('show_second_hand_checkbox');
     var dateCheckbox = document.getElementById('show_date_checkbox');
     var temperatureCheckbox = document.getElementById('show_temperature_checkbox');
+    var theWeatherLocation = document.getElementById('weather_location');
     var imperialUnits = document.getElementById('imperial_radio');
     var metricUnits = document.getElementById('metric_radio');
 
@@ -131,6 +136,7 @@
       'show_second_hand': secondHandCheckbox.checked,
       'show_date': dateCheckbox.checked,
       'show_temperature': temperatureCheckbox.checked,
+      'weather_location': theWeatherLocation.value,
       'units': units
     };
 
