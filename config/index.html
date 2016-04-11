@@ -152,6 +152,7 @@
     localStorage['show_second_hand'] = options['show_second_hand'];
     localStorage['show_date'] = options['show_date'];
     localStorage['show_temperature'] = options['show_temperature'];
+    localStorage['weather_location'] = options['weather_location'];
     localStorage['units'] = options['units'];
 
     console.log('Got options: ' + JSON.stringify(options));
@@ -191,6 +192,7 @@
       var secondHandCheckbox = document.getElementById('show_second_hand_checkbox');
       var dateCheckbox = document.getElementById('show_date_checkbox');
       var temperatureCheckbox = document.getElementById('show_temperature_checkbox');
+      var theWeatherLocation = document.getElementById('weather_location');
       var imperialUnits = document.getElementById('imperial_radio');
       var metricUnits = document.getElementById('metric_radio');
 
@@ -206,6 +208,7 @@
     if (localStorage['show_second_hand']) secondHandCheckbox.checked = JSON.parse(localStorage['show_second_hand']);
     if (localStorage['show_date']) dateCheckbox.checked = JSON.parse(localStorage['show_date']);
     if (localStorage['show_temperature']) temperatureCheckbox.checked = JSON.parse(localStorage['show_temperature']);
+    if (localStorage['weather_location'])theWeatherLocation.value = JSON.parse(localStorage['weather_location']);
     if (localStorage['units']) {
       if (localStorage['units'] == 'metric') {
         metricUnits.checked = true;
