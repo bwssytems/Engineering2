@@ -24,13 +24,13 @@
     "projectType": "native",
     "resources": {
         "media": [
-      {
-        "menuIcon": true,
-        "type": "png",
-        "name": "IMAGE_MENU_ICON",
-        "file": "images/menu_icon.png"
-      }
-    ]
+            {
+                "file": "images/menu_icon.png",
+                "name": "MENU_ICON",
+                "targetPlatforms": null,
+                "type": "png"
+            }
+        ]
     },
     "sdkVersion": "3",
     "shortName": "Engineering2",
