@@ -1,5 +1,5 @@
 var units = 'imperial';
-var weatherLocation = "chicago,il"
+var weatherLocation = null;
 
 if (localStorage.units) {
 	units = localStorage.units;
@@ -103,14 +103,18 @@ Pebble.addEventListener('webviewclosed', function(e) {
 
 function getTemp(lat, lon, callback) {
 	var req = new XMLHttpRequest();
-	var url = 'https://query.yahooapis.com/v1/public/yql?q=select%20item.condition%20from%20weather.forecast%20where%20woeid%20in%20(select%20woeid%20from%20geo.places(1)%20where%20text%3D%22'+weatherLocation+'%22)&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys';
+  var url = 'http://api.openweathermap.org/data/2.5/weather?lat='+lat+'&lon='+lon+'&units='+units+'&appid=4dbec63b78767611343e4eec0248e470';
+  
+  if(weatherLocation != null)
+    url = 'http://api.openweathermap.org/data/2.5/weather?q='+weatherLocation+'&units='+units+'&appid=4dbec63b78767611343e4eec0248e470';
+    
 	console.log(url);
 	req.open('GET', url, true);
 	req.onload = function(e) {
 		if (req.readyState == 4 && req.status == 200) {
 	      console.log(req.responseText);
 				var res = JSON.parse(req.responseText);
-				var temp = res.query.results.channel.item.condition.temp;
+        var temp = res.main.temp;
 
 				if (units == 'metric') {
 
