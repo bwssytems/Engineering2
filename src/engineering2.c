@@ -3,17 +3,23 @@
 #include "engineering2.h"
 
 static Window *window;
-static Layer *s_simple_bg_layer, *s_date_layer, *s_hands_layer;
+static Layer *s_simple_bg_layer, *s_hands_layer;
+static TextLayer *date_layer_right, *date_layer_left, *date_layer_bottom;
 static TextLayer *s_day_label, *s_num_label;
 
 static GPath *s_minute_arrow, *s_hour_arrow;
-static char s_date_buffer[7], s_temp_buffer[5];
+static char s_temp_buffer[5];
 
 static AppSync s_sync;
 static uint8_t s_sync_buffer[64];
 
 static GColor gcolor_background, gcolor_hour_marks, gcolor_minute_marks, gcolor_numbers, gcolor_hour_hand, gcolor_minute_hand, gcolor_second_hand;
 static bool b_show_numbers, b_show_temperature, b_show_date, b_show_second_hand;
+
+#define DATE_LAYER_VERTICAL_OFFSET 20 //px    //to vertically center the left and right date layers
+#define DATE_LAYER_HORIZONTAL_OFFSET 100       //to move the left and right date layers inward
+#define DATE_LAYER_BOTTOM_OFFSET 60           //height of the bottom date layer
+
 
 static void load_persisted_values() {
 	// SHOW_NUMBERS
@@ -272,17 +278,6 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
 		.y = (int16_t)(-cos_lookup(second_angle_tail) * (int32_t)second_hand_tail_length / TRIG_MAX_RATIO) + center.y,
 	};
 
-	// date
-	if (b_show_date) {
-		graphics_context_set_text_color(ctx, gcolor_numbers);
-		int offset = !b_show_numbers * 10;
-#ifdef PBL_RECT
-		graphics_draw_text(ctx, s_date_buffer, fonts_get_system_font(FONT_KEY_GOTHIC_14), GRect(80, 75, 40 + offset, 14), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
-#else
-		graphics_draw_text(ctx, s_date_buffer, fonts_get_system_font(FONT_KEY_GOTHIC_18), GRect(100, 78, 45 + offset, 14), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
-#endif
-	}
-
 	// temperature
 	if (b_show_temperature) {
 		graphics_context_set_text_color(ctx, gcolor_numbers);
@@ -316,21 +311,45 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
 	graphics_fill_circle(ctx, GPoint(bounds.size.w / 2, bounds.size.h / 2), 4);
 }
 
-static void date_update_proc(Layer *layer, GContext *ctx) {
-	time_t now = time(NULL);
-	struct tm *t = localtime(&now);
-
-	strftime(s_date_buffer, sizeof(s_date_buffer), "%a %d", t);
-	uppercase(s_date_buffer);
+static void update_date(void){
+  time_t now = time(NULL);
+  struct tm *t = localtime(&now);
+  
+  //corrects for 24h time
+  int hour = (t->tm_hour < 13) ? t->tm_hour : t->tm_hour - 12;
+  
+  static char date_buffer[16];
+  
+  //strategically put the date where the hands are not covering
+  if((t->tm_min < 7 || t->tm_min > 23) && (hour < 1 || hour >= 5)){
+    strftime(date_buffer, sizeof(date_buffer), "%a\n%d", t);
+    text_layer_set_text(date_layer_right, date_buffer);
+    text_layer_set_text(date_layer_left, "\0");
+    text_layer_set_text(date_layer_bottom, "\0"); 
+  }
+  else if((t->tm_min < 37 || t->tm_min > 53) && (hour < 7 || hour > 11)){
+    strftime(date_buffer, sizeof(date_buffer), "%a\n%d", t);
+    text_layer_set_text(date_layer_left, date_buffer);
+    text_layer_set_text(date_layer_right, "\0");
+    text_layer_set_text(date_layer_bottom, "\0");
+  }
+  else{
+    strftime(date_buffer, sizeof(date_buffer), "%a %d", t);
+    text_layer_set_text(date_layer_bottom, date_buffer);
+    text_layer_set_text(date_layer_right, "\0");
+    text_layer_set_text(date_layer_left, "\0");
+  }
 }
 
 static void handle_second_tick(struct tm *tick_time, TimeUnits units_changed) {
 	layer_mark_dirty(window_get_root_layer(window));
+  update_date();
 }
 
 static void window_load(Window *window) {
 	Layer *window_layer = window_get_root_layer(window);
 	GRect bounds = layer_get_bounds(window_layer);
+		int offset = !b_show_numbers * 10;
 
 	s_simple_bg_layer = layer_create(bounds);
 	layer_set_update_proc(s_simple_bg_layer, bg_update_proc);
@@ -338,9 +357,62 @@ static void window_load(Window *window) {
 
 	window_set_background_color(window, gcolor_background);
 
-	s_date_layer = layer_create(bounds);
-	layer_set_update_proc(s_date_layer, date_update_proc);
-	layer_add_child(window_layer, s_date_layer);
+#ifdef PBL_RECT
+  date_layer_right = text_layer_create(GRect(
+    (bounds.size.w - DATE_LAYER_HORIZONTAL_OFFSET),
+    (bounds.size.h/2 - DATE_LAYER_VERTICAL_OFFSET), 
+    DATE_LAYER_HORIZONTAL_OFFSET,
+    60));
+
+  date_layer_left = text_layer_create(GRect(
+    0,
+    (bounds.size.h/2 - DATE_LAYER_VERTICAL_OFFSET),
+    DATE_LAYER_HORIZONTAL_OFFSET + offset,
+    60));
+  
+  date_layer_bottom = text_layer_create(GRect(
+    0,
+    (bounds.size.h - DATE_LAYER_BOTTOM_OFFSET),
+    bounds.size.w,
+    DATE_LAYER_BOTTOM_OFFSET));
+#else
+  date_layer_right = text_layer_create(GRect(
+    (bounds.size.w - DATE_LAYER_HORIZONTAL_OFFSET),
+    (bounds.size.h/2 - DATE_LAYER_VERTICAL_OFFSET), 
+    DATE_LAYER_HORIZONTAL_OFFSET,
+    60));
+
+  date_layer_left = text_layer_create(GRect(
+    0,
+    (bounds.size.h/2 - DATE_LAYER_VERTICAL_OFFSET),
+    DATE_LAYER_HORIZONTAL_OFFSET + (offset * 4),
+    60));
+  
+  date_layer_bottom = text_layer_create(GRect(
+    0,
+    (bounds.size.h - DATE_LAYER_BOTTOM_OFFSET),
+    bounds.size.w,
+    DATE_LAYER_BOTTOM_OFFSET + (offset * 2)));
+ #endif
+ 
+  text_layer_set_background_color(date_layer_right, GColorClear);
+  text_layer_set_text_color(date_layer_right, gcolor_numbers);
+  text_layer_set_text_alignment(date_layer_right, GTextAlignmentCenter);
+  text_layer_set_font(date_layer_right, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
+  
+  text_layer_set_background_color(date_layer_left, GColorClear);
+  text_layer_set_text_color(date_layer_left, gcolor_numbers);
+  text_layer_set_text_alignment(date_layer_left, GTextAlignmentCenter);
+  text_layer_set_font(date_layer_left, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
+  
+  text_layer_set_background_color(date_layer_bottom, GColorClear);
+  text_layer_set_text_color(date_layer_bottom, gcolor_numbers);
+  text_layer_set_text_alignment(date_layer_bottom, GTextAlignmentCenter);
+  text_layer_set_font(date_layer_bottom, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
+ update_date();
+ layer_add_child(window_layer, text_layer_get_layer(date_layer_right));
+  layer_add_child(window_layer, text_layer_get_layer(date_layer_left));
+  layer_add_child(window_layer, text_layer_get_layer(date_layer_bottom));
 
 	s_hands_layer = layer_create(bounds);
 	layer_set_update_proc(s_hands_layer, hands_update_proc);
@@ -351,7 +423,9 @@ static void window_load(Window *window) {
 
 static void window_unload(Window *window) {
 	layer_destroy(s_simple_bg_layer);
-	layer_destroy(s_date_layer);
+	text_layer_destroy(date_layer_right);
+	text_layer_destroy(date_layer_left);
+	text_layer_destroy(date_layer_bottom);
 
 	text_layer_destroy(s_day_label);
 	text_layer_destroy(s_num_label);
@@ -392,7 +466,6 @@ static void init() {
 	window_stack_push(window, true);
 
 	s_temp_buffer[0] = '\0';
-	s_date_buffer[0] = '\0';
 
 	// init hand paths
 	s_minute_arrow = gpath_create(&MINUTE_HAND_POINTS);
